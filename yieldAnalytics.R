@@ -76,9 +76,8 @@ roCrelativeGrowthRate = function()
 extractParam = function(model)
 {
   p = list();
-  param = data.frame(summary(model)$parameters);
-  p$umin = param['B.B',1];
-  p$tmax = (1/param['v.v',1]) * log((param['v.v',1] * param['C.C',1]) / param['B.B',1]);
+  p$umin = coef(model)[2];
+  p$tmax = (1/coef(model)[4]) * log((coef(model)[4] * coef(model)[3]) / coef(model)[2]);
   return(p);
 }
 
@@ -95,18 +94,25 @@ fitYield = function(ydat, tdat)
   eunsc = ydat ~ A + B*tdat + C*(exp(-v*tdat));
   optx = optima(start1, wdata, rhsfit);
   o = nlsLM(eunsc, 
-            start=list(A = start1[1], B = start1[2], C = start1[3], r = start1[4]), trace = TRUE);
+            start=list(A = start1[1], B = start1[2], C = start1[3], v = start1[4]), trace = TRUE);
   
-  
-  plot(tdat, ydat, xlab = 'T accummulated temperature', ylab = 'foliage cover', main='Model I');
-  lines(tdat, predict(o), col='red')
+  A = coef(o)[1]; B = coef(o)[2]; C = coef(o)[3]; v = coef(o)[4] 
+  plot(tdat, ydat, xlab = 'T accummulated temperature', 
+       ylab = 'foliage cover', main='Model I', ylim=range(-0.4,1), xlim=range(0,2500), pch=21, bg='red');
+  lines(tdat, predict(o), col='green')
   cor(ydat, predict(o))
+  
+  x = 0:2000;
+  yeq = ydat ~ A + B*x + C*(exp(-v*x));
+  y = eval(parse(text=yeq))
+  lines(x,y);
   return(o)
 }
 
 
-y = c(0.05, 0.1, 0.38, 0.6, 0.90, 0.98, 0.97);
-t = c(300, 490, 510, 680, 800, 1250, 1600);
+y = c(0.745882353, 0.731678201, 0.689653979, 0.565986159, 0.553529412, 0.444429066, 0.380415225, 0.261262976
+);
+t = c(1478.125, 912.5,821.875,734.375,734.375,528.125,465.625,443.75);
 fm= fitYield(y, t);
 
 
