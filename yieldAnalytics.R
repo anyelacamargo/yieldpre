@@ -1,6 +1,31 @@
 library('minpack.lm');
 library("optimx")
 library('ggplot2');
+source('C:/Anyela/M/senescence_disease/generic.R');
+
+# create cumulative sum
+# data = data to use
+# variable: variable to cumulate
+cumSum = function(data, variable)
+{
+  
+  return(sumsum(data[[variable]]));
+  
+}
+
+
+
+
+# Intercepted radiation use efficiency (Eq 7). A.Qi et al
+interceptedRadiationUE = function(measurements_table)
+{
+  
+  e0 = measurements_table[measurements_table$Variables=='e0', 'Value'];
+  l = measurements_table[measurements_table$Variables=='l', 'Value'];
+  #e = e0*(Ea/Ep)  exp(-l*W);
+  
+  
+}
 
 
 optima = function(start1, w, fc)
@@ -17,19 +42,7 @@ rhsfit <- function(varray, mydata)
   RSS = sum((mydata$y -  y.pred)^2);
 }
 
-# Effect of Soil water stress
-# Richter et al. Agricultural and forest, 109 (2001)
-# DAW = Daily available water content Qi et al
-# AWC = Available water content
-soilWaterStress = function (DAW, AWC)
-{
-  Oth = 0.02; #(Sinclair (1986))
-  fdt = 6:12; #(Richter)
-  Orel = DAW / AWC;
-  fstress = (2 / (1 + exp(-fdt * (Orel - Oth)))) - 1;
-  return(fstress);
-  
-}
+
 
 # Rooting depth (D)
 # Dsowing = Sowing depth fixed
@@ -38,16 +51,21 @@ soilWaterStress = function (DAW, AWC)
 # B0 = initial relative growth
 # S Rate of change with B0 to 0 = 0.002715
 # T0 = 120
-rootingDepth = function()
+c = function(data, measurements_table)
 {
   Dsowing = 0.02;
   l0 = 0.0491;
   B0 = 0.00935;
   S = 0.002715;
   T0 = 120;
-
+  T = avgdata$HCAirTemperature;
+  T = cumsum(T);
   D = Dsowing + l0*exp((B0/S)*(1-exp(-S*(T-T0))));
+  plot(T, D, xlab = 'T accummulated temperature', 
+       ylab = 'Root depth', main='Model I', pch=21, bg='red');
+  lines(tdat, predict(o), col='green');
   
+  plot()  
 }
 
 
@@ -111,7 +129,7 @@ extractParam = function(model)
 # ydat = yield
 # tdat = accumulated temperature
 # Wekker and Jaggard. Annals of Botany 79 (1997) 
-fitYield = function(ydat, tdat)
+PredYield = function(ydat, tdat)
 {
   wdata = data.frame(y=ydat, x=tdat);
   eunsc = ydat ~ A + B*tdat + C*(exp(-v*tdat)); # Equation
@@ -140,7 +158,193 @@ fitYield = function(ydat, tdat)
   return(o)
 }
 
+# Eq 17
+# Soil water potential in the rooting zone
+calQfcRooting = function(measurements_table)
+{
+  b = measurements_table[measurements_table$Variables=='b', 'Value'];
+  Qfcroot = -5*(Q /calQfc(measurements_table))^b;
+  return(Qfcroot);
+}
 
-ydat = c(0.75, 0.73, 0.69, 0.57, 0.55, 0.44, 0.38, 0.26);
-tdat = c(1478.125, 912.5,821.875,734.375,734.375,528.125,465.625,443.75);
+# Eq 18
+# Q
+# SMD = Soil moisture deficit
+calQ = function()
+{
+  
+  Q = calQfc(measurements_table) - (SMD / D);
+  return(Q);  
+}
+
+# Eq 19
+# SSE = 
+calSMD = function()
+{
+  
+  R = cumsum(avgdata$Precipitation);
+  
+  SMD = SMD + SSE + Ea - R;
+  
+}
+
+
+
+#Eq 16
+calQfc = function(measurements_table)
+{
+  a1 = measurements_table[measurements_table$Variables=='a1', 'Value'];
+  a2 = measurements_table[measurements_table$Variables=='a2', 'Value'];
+  b = measurements_table[measurements_table$Variables=='b', 'Value'];
+  Qfc = a2 * (a1/5) ^ (1/b)
+  return(Qfc);
+  
+}
+
+#Qrel = AWC / Qfc;
+calQrel = function(measurements_table)
+{
+  
+  Qrel = AWC / calQfc(measurements_table);
+  
+  
+}
+
+#Eq 13
+# DAily crop actual transpiration
+calEa = function()
+{
+  Ea = min(Ep, Emax);
+  return(Ea);
+  
+}
+
+# Eq 12
+# Daily Crop potential transpiration
+# f = 
+# ETgrass = Daily potential evapotranspiration
+calEp = function(measurements_table)
+{
+  
+  ET_grass = measurements_table[measurements_table$Variables=='ET_grass', 'Value'];
+  Ep = (1.25*cal) * ETgrass;
+}
+
+
+# Eq 11
+# SSE
+calSSE = function(measurements_table)
+{
+  
+  SSE = 1.5*(1 - calf(measurements_table, avgdata))
+  return(SSE);
+}
+
+#Eq 7
+# Intercepted radiation use efficiency
+cale = function(measurements_table, avgdata)
+{
+  e0 = measurements_table[measurements_table$Variables=='e0', 'Value'];
+  l = measurements_table[measurements_table$Variables=='l', 'Value'];
+  W = measurements_table[measurements_table$Variables=='W', 'Value'];
+  Ea = calEa(measurements_table, avgdata);
+  Ep = calEp(measurements_table, avgdata);
+  W = calW(measurements_table, avgdata);
+  
+  e = e0*(Ea/Ep)*exp(-s*W);
+}
+
+
+#Eq 6
+# Crop dry matter
+calW = function(measurements_table, avgdata)
+{
+  dW = e*calf(measurements_table, avgdata) * S;
+  return(W)
+}
+
+
+#Eq 5
+# 
+# D = rooting depth
+calD = function(measurements_table, avgdata)
+{
+  
+  Dsowing = measurements_table[measurements_table$Variables=='Dsowing', 'Value'];
+  l0 = measurements_table[measurements_table$Variables=='l0', 'Value'];
+  B0 = measurements_table[measurements_table$Variables=='B0', 'Value'];
+  l0 = measurements_table[measurements_table$Variables=='l0', 'Value'];
+  s = measurements_table[measurements_table$Variables=='s', 'Value'];
+  T0 = measurements_table[measurements_table$Variables=='T0', 'Value'];
+  T = cumsum(avgdata$HCAirTemperature);
+  
+  D = Dsowing + l0*exp((B0/s))*(1-exp(-s*(T - T0)));
+  plot(T, D, xlab = 'T accummulated temperature', 
+       ylab = 'Root depth', main='Model I', pch=21, bg='red');
+  lines(tdat, predict(o), col='green'); 
+  return(D);
+  
+}
+
+
+# Eq 4
+calv = function()
+{
+  v0 = measurements_table[measurements_table$Variables=='v0', 'Value'];
+  v =v0(1+0.1(1-calfstress()));
+  
+}
+
+# eq 3
+calumin = function()
+{
+  µmin0 = measurements_table[measurements_table$Variables=='µmin0', 'Value'];
+  umin = µmin0(2-calfstress());
+  return(umin);
+  
+}
+
+# Effect of Soil water stress
+# Richter et al. Agricultural and forest, 109 (2001)
+# Qfc = Daily available water content Qi et al
+# AWC = Available water content at field capacity
+# Eq 2 fstress
+calfstress = function (DAW, AWC)
+{
+  Oth = 0.02; #(Sinclair (1986))
+  fdt = 6:12; #(Richter)
+  Qrel = Qfc / AWC;
+  fstress = (2 / (1 + exp(-fdt * (Qrel - Oth)))) - 1;
+  return(fstress);
+  
+}
+
+
+# Calculate crop canopy cover
+# Eq 1
+calf = function(measurements_table, avgdata)
+{
+  f0 = measurements_table[measurements_table$Variables=='f0', 'Value'];
+  umin = measurements_table[measurements_table$Variables=='µmin', 'Value'];
+  T0 = measurements_table[measurements_table$Variables=='T0', 'Value'];
+  u0 = measurements_table[measurements_table$Variables=='µ0', 'Value'];
+  v = measurements_table[measurements_table$Variables=='v', 'Value'];
+  T = cumsum(avgdata$HCAirTemperature);
+  
+  f = f0*exp(umin*(T-T0) + (((u0 - umin)/v) * (1-exp(-v*(T-T0)))));
+  
+  plot(T, f, xlab = 'T accummulated temperature', 
+       ylab = 'Root depth', main='Model I', pch=21, bg='red');
+  lines(tdat, predict(o), col='green');  
+  
+}
+
+#ydat = c(0.75, 0.73, 0.69, 0.57, 0.55, 0.44, 0.38, 0.26);
+#tdat = c(1478.125, 912.5,821.875,734.375,734.375,528.125,465.625,443.75);
 fm= fitYield(ydat, tdat);
+measurements_table = read.table('BroomsBarnParam.csv', header=TRUE, sep=',');
+
+rawdata = read.table('BroomsBarnData.csv', sep=',', header=TRUE)
+avgdata = averageValues(rawdata[, c('SolarRadiation', 'Precipitation','HCAirTemperatureOp1')], 
+                        list(date=rawdata$date), rawdata);
+colnames(avgdata)[2] = 'HCAirTemperature';
