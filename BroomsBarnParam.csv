@@ -12,7 +12,7 @@ Total dry matter and sugar yield,T0,Accumulated temperature from sowing to 50% c
 Foliage cover T,f0,Initial foliage cover when T=T0,m2 m?2,0.0015
 Foliage cover T,µ0,Rate of foliage cover expansion at T=T0,d?1,0.06556
 Foliage cover T,µmin0 ,Rate of foliage cover decay with T,d?1 d?1,-0.000169
-Foliage cover T,µmin, as affected by crop water stress,d-1,-0.000169
+Foliage cover T,µmin, as affected by crop water stress,d-1,-0.00001
 Foliage cover T,v0,"Rate of change of µ, from µ0 to µmin0",d-1,0.005866
 Foliage cover T,v,v0 as affected by crop water stress,d-1,0.0036
 Foliage cover T,Dsowing,Initial rooting depth or sowing depth,m,0.02

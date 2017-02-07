@@ -44,31 +44,6 @@ rhsfit <- function(varray, mydata)
 
 
 
-# Rooting depth (D)
-# Dsowing = Sowing depth fixed
-# T = daily air temperature above 3C
-# l0 = sum of the lenght of epycol
-# B0 = initial relative growth
-# S Rate of change with B0 to 0 = 0.002715
-# T0 = 120
-c = function(data, measurements_table)
-{
-  Dsowing = 0.02;
-  l0 = 0.0491;
-  B0 = 0.00935;
-  S = 0.002715;
-  T0 = 120;
-  T = avgdata$HCAirTemperature;
-  T = cumsum(T);
-  D = Dsowing + l0*exp((B0/S)*(1-exp(-S*(T-T0))));
-  plot(T, D, xlab = 'T accummulated temperature', 
-       ylab = 'Root depth', main='Model I', pch=21, bg='red');
-  lines(tdat, predict(o), col='green');
-  
-  plot()  
-}
-
-
 # Quantitative effect of fstress on y (f on A. Qi)
 effectofSWSfitYield = function(fstress)
 {
@@ -233,12 +208,25 @@ calEp = function(measurements_table)
 
 # Eq 11
 # SSE
-calSSE = function(measurements_table)
+calSSE = function(measurements_table, avgdata)
 {
   
   SSE = 1.5*(1 - calf(measurements_table, avgdata))
   return(SSE);
 }
+
+
+#Eq 10
+# Net crop yield
+calY = function(measurements_table, avgdata)
+{
+  k = measurements_table[measurements_table$Variables=='k', 'Value'];
+  
+  Y = W - (1/k)*log((k*W) + 1);
+  return(Y);
+  
+}
+
 
 #Eq 7
 # Intercepted radiation use efficiency
@@ -311,9 +299,11 @@ calumin = function()
 # Eq 2 fstress
 calfstress = function (DAW, AWC)
 {
+  Qfc = measurements_table[measurements_table$Variables=='Qfc', 'Value'];
+  Qrel = measurements_table[measurements_table$Variables=='Qrel', 'Value'];
   Oth = 0.02; #(Sinclair (1986))
   fdt = 6:12; #(Richter)
-  Qrel = Qfc / AWC;
+  Qrel = AWC / Qfc;
   fstress = (2 / (1 + exp(-fdt * (Qrel - Oth)))) - 1;
   return(fstress);
   
@@ -331,20 +321,28 @@ calf = function(measurements_table, avgdata)
   v = measurements_table[measurements_table$Variables=='v', 'Value'];
   T = cumsum(avgdata$HCAirTemperature);
   
-  f = f0*exp(umin*(T-T0) + (((u0 - umin)/v) * (1-exp(-v*(T-T0)))));
-  
-  plot(T, f, xlab = 'T accummulated temperature', 
-       ylab = 'Root depth', main='Model I', pch=21, bg='red');
-  lines(tdat, predict(o), col='green');  
+  for(i in seq(-0.00001,0.00012, by=0.00001))
+  {
+    umin =i
+    f = f0*exp(umin*(T-T0) + (((u0 - umin)/v) * (1-exp(-v*(T-T0)))));
+    
+    plot(T, f, xlab = 'T accummulated temperature', 
+         ylab = 'Crop foliage cover', main='Model I', pch=21, bg='red');
+    if(readline(i) =='q') { break()}
+  }
+  return(f);
   
 }
 
 #ydat = c(0.75, 0.73, 0.69, 0.57, 0.55, 0.44, 0.38, 0.26);
 #tdat = c(1478.125, 912.5,821.875,734.375,734.375,528.125,465.625,443.75);
-fm= fitYield(ydat, tdat);
+
 measurements_table = read.table('BroomsBarnParam.csv', header=TRUE, sep=',');
 
 rawdata = read.table('BroomsBarnData.csv', sep=',', header=TRUE)
 avgdata = averageValues(rawdata[, c('SolarRadiation', 'Precipitation','HCAirTemperatureOp1')], 
                         list(date=rawdata$date), rawdata);
 colnames(avgdata)[2] = 'HCAirTemperature';
+
+fc = calf(measurements_table, avgdata)
+fm= fitYield(ydat, tdat);
