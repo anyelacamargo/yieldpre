@@ -489,6 +489,7 @@ calAllEq = function(measurements_table, avgdata)
   
   v$date = avgdataCum$date;
   
+  
   for(i in 1:nrow(avgdataCum))
   {
     #SMD = -i
@@ -499,26 +500,21 @@ calAllEq = function(measurements_table, avgdata)
     v$Qfc[i] = calcQfc(measurements_table); # Qfc Eq 16
     v$Qpwp[i] = calcQpwp(measurements_table);
     v$fdt[i] = calcfdt(v$thermaltime[i]);
-    
-    if(i == 1) { v$Q[i] = v$Qfc[i]}
-    else{
-        v$Q[i] = calcQ(v$Qfc[i], v$SMD[i], v$D[i]); # Eq 18 Q = Qfc
-    }
+    v$SMD[1] = 0;
+    v$Q[1] = v$Qfc[1];
+    v$f[1] = 0;
+     
+    if(i > 1) { v$Q[i] = calcQ(v$Qfc[i], v$SMD[(i-1)], v$D[i]); } # Eq 18 Q = Qfc
     
     v$Qrel[i] = calcQrel(v$Q[i], v$Qfc[i], v$Qpwp[i]); #Qrel
     
       
     # Depend on other values
-    
-    if(i == 1) { v$SMD[i] = 0}
-    else{
-      
-      v$SMD[i] = calcSMD(v$SMD[i-1], v$SSE[i], v$Ea[i], v$rainfall[i]); # Eq 12
-    }
+   
     
     # v$Q[i] = calcQ(v$Qfc[i], v$SMD[i], v$D[i]); # Eq 18
     # v$Qrel[i] = calcQrel(v$Q[i], v$Qfc[i]); #Qrel
-    # v$psi_soil[i] = calcpsi_soil(measurements_table, v$Q[i], v$Qfc[i]); # Eq 17
+    v$psi_soil[i] = calcpsi_soil(measurements_table, v$Q[i], v$Qfc[i]); # Eq 17
     v$Emax[i] = calcEmax(measurements_table, v$psi_soil[i], v$Qfc[i], v$D[i], v$Q[i]); # Eq 14 and 15
     v$Ea[i] = calcEa(v$Ep[i], v$Emax[i]); # Eq 13
     
@@ -528,13 +524,13 @@ calAllEq = function(measurements_table, avgdata)
     v$v[i] = calcv(measurements_table, v$fstress[i]); # Eq 4
     v$umin[i] =  calcumin(measurements_table, v$fstress[i]); # Eq 3
     
-    if( i == 1 ) { v$f[i] = 0;}
-    else{
-    v$f[i] = calcf(measurements_table, v$thermaltime[i], v$umin[i], v$v[i]); # Eq 1
-    }
+    if( i > 1 ) { v$f[i] = calcf(measurements_table, v$thermaltime[i], v$umin[i], v$v[i]); }# Eq 1
     
     v$SSE[i] = calcSSE(measurements_table, v$f[i]); # Eq 11
     v$Ep[i] = calcEp(measurements_table, v$f[i]); # Eq 12
+    
+    if(i > 1) { v$SMD[i] = calcSMD(v$SMD[i-1], v$SSE[i], v$Ea[i], v$rainfall[i]) }; # Eq 12
+    
   }
   
   
