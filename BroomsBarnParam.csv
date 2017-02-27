@@ -11,23 +11,23 @@ Total dry matter and sugar yield,l,Decaying coefficient of radiation conversion 
 Total dry matter and sugar yield,T0,Accumulated temperature from sowing to 50% crop emergence,?Cd,120
 Foliage cover T,f0,Initial foliage cover when T=T0,m2 m?2,0.0015
 Foliage cover T,µ0,Rate of foliage cover expansion at T=T0,d?1,0.06556
-Foliage cover T,µmin0 ,Rate of foliage cover decay with T,d?1 d?1,-0.000169
+Foliage cover T,umin0,Rate of foliage cover decay with T,d?1 d?1,-0.000169
 Foliage cover T,µmin, as affected by crop water stress,d-1,-0.00001
 Foliage cover T,v0,"Rate of change of µ, from µ0 to µmin0",d-1,0.005866
-Foliage cover T,v,v0 as affected by crop water stress,d-1,0.0036
+Foliage cover T,v,v0 as affected by crop water stress,d-1,0.005
 Foliage cover T,Dsowing,Initial rooting depth or sowing depth,m,0.02
 Foliage cover T,Qrel,Fraction of transpirable water,,1
 Rooting depth D,l0,Length of epicotyl when T=T0,m,0.0491
 Rooting depth D,B0,Rate of increase of D when T=T0,d?1,0.00935
 Rooting depth D,s,Rate of change with ?0 to 0,d?1,0.002715
 Rooting depth D,Ea,Actual crop evapotranspiration,mmd?1,NA
-Evapotranspiration Ep,?soil,Water potential in the rooting zone,kPa,NA
-Evapotranspiration Ep,?crop Q,Water potential of the canopy,kPa kgm?3,-1500
+Evapotranspiration Ep,psi_soil,Water potential in the rooting zone,kPa,NA
+Evapotranspiration Ep,psi_crop,Water potential of the canopy,kPa kgm?3,-1500
 Evapotranspiration Ep,Q,Water content of soil within the rooting zone,kgm-3,NA
 Evapotranspiration Ep,Qfc,Soil texture related water content at field capacity (Available water content),kgm-3,
 Evapotranspiration Ep,SMD,Soil moisture deficit,mm,NA
 Evapotranspiration Ep,R,Rainfall,mmd?1,NA
-Evapotranspiration Ep,b,Soil texture related values (2–18),–,NA
+Evapotranspiration Ep,b,Soil texture related values (2–18),–,10
 Evapotranspiration Ep,a1,Regression coefficient,kg?1 m4 s?1,0.4
 Evapotranspiration Ep,a2,Regression coefficient,(sd?1)?1,0.6
 Evapotranspiration Ep,c1,Regression coefficient,kg?1 m5 s?1,378.8
