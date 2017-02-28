@@ -486,56 +486,46 @@ calAllEq = function(measurements_table, avgdata)
   
   avgdataCum$HCAirTemperatureOp1[1] = 0;
   avgdataCum$Precipitation[1] = 0;
-  
   v$date = avgdataCum$date;
   
+  # Setting up initial parameters
+  v$Qpwp[1] = calcQpwp(measurements_table);
+  v$Qfc[1] = calcQfc(measurements_table); # Qfc Eq 16
+  v$SMD[1] = 0;
+  v$Q[1] = v$Qfc[1];
+  v$f[1] = 0;
   
-  for(i in 1:nrow(avgdataCum))
+  ## Loop through thermal (avgdataCum$HCAirTemperatureOp1) time and place value on matrix (v)
+  for(i in 2:nrow(avgdataCum)) 
   {
-    #SMD = -i
+    j = (i-1);
     # Don't depend on anything else
-    v$thermaltime[i] = avgdataCum$HCAirTemperatureOp1[i] + T0;
-    v$rainfall[i] = avgdataCum$Precipitation[i] + 3.00;
+    v$thermaltime[i] = avgdataCum$HCAirTemperatureOp1[j] + T0;
+    v$rainfall[i] = avgdataCum$Precipitation[j] + 3.00;
     v$D[i] = calcD(measurements_table, v$thermaltime[i]); # rooting depth; Eq 5
-    v$Qfc[i] = calcQfc(measurements_table); # Qfc Eq 16
-    v$Qpwp[i] = calcQpwp(measurements_table);
     v$fdt[i] = calcfdt(v$thermaltime[i]);
-    v$SMD[1] = 0;
-    v$Q[1] = v$Qfc[1];
-    v$f[1] = 0;
-     
-    if(i > 1) { v$Q[i] = calcQ(v$Qfc[i], v$SMD[(i-1)], v$D[i]); } # Eq 18 Q = Qfc
-    
-    v$Qrel[i] = calcQrel(v$Q[i], v$Qfc[i], v$Qpwp[i]); #Qrel
-    
-      
-    # Depend on other values
    
+    # Depend on other values
+    ##  
     
-    # v$Q[i] = calcQ(v$Qfc[i], v$SMD[i], v$D[i]); # Eq 18
-    # v$Qrel[i] = calcQrel(v$Q[i], v$Qfc[i]); #Qrel
-    v$psi_soil[i] = calcpsi_soil(measurements_table, v$Q[i], v$Qfc[i]); # Eq 17
-    v$Emax[i] = calcEmax(measurements_table, v$psi_soil[i], v$Qfc[i], v$D[i], v$Q[i]); # Eq 14 and 15
-    v$Ea[i] = calcEa(v$Ep[i], v$Emax[i]); # Eq 13
-    
-    # Qrel fro previous circle
+    v$Qrel[i] = calcQrel(v$Q[j], v$Qfc[1], v$Qpwp[1]); #Qrel
     v$fstress[i] = calcfstress(v$fdt[i], v$Qrel[i] ); # Eq 2
-    
     v$v[i] = calcv(measurements_table, v$fstress[i]); # Eq 4
     v$umin[i] =  calcumin(measurements_table, v$fstress[i]); # Eq 3
-    
-    if( i > 1 ) { v$f[i] = calcf(measurements_table, v$thermaltime[i], v$umin[i], v$v[i]); }# Eq 1
+    v$f[i] = calcf(measurements_table, v$thermaltime[i], v$umin[i], v$v[i]);# Eq 1
     
     v$SSE[i] = calcSSE(measurements_table, v$f[i]); # Eq 11
     v$Ep[i] = calcEp(measurements_table, v$f[i]); # Eq 12
     
-    if(i > 1) { v$SMD[i] = calcSMD(v$SMD[i-1], v$SSE[i], v$Ea[i], v$rainfall[i]) }; # Eq 12
+    
+    v$psi_soil[i] = calcpsi_soil(measurements_table, v$Q[j], v$Qfc[1]); # Eq 17
+    v$Emax[i] = calcEmax(measurements_table, v$psi_soil[i], v$Qfc[1], v$D[i], v$Q[j]); # Eq 14 and 15
+    v$Ea[i] = calcEa(v$Ep[i], v$Emax[i]); # Eq 13
+    
+    v$SMD[i] = calcSMD(v$SMD[j], v$SSE[i], v$Ea[i], v$rainfall[i]); # Eq 12
+    v$Q[i] = calcQ(v$Qfc[1], v$SMD[(i)], v$D[i]);  # Eq 18 Q = Qfc
     
   }
-  
-  
-  #plot(T, f, xlab = 'T accummulated temperature', 
-  #ylab = 'Crop foliage cover', main='Model I', pch=21, bg='red');
   
   return(data.frame(v));
 }
@@ -568,5 +558,5 @@ colnames(avgdata)[2] = 'HCAirTemperatureOp1';
 #fm = PredYield(ydat, tdat);
 #fm = PredYieldDummy(ydat, tdat);
 m = calAllEq(measurements_table, avgdata)
-
+plot(m$f)
 
